@@ -4,7 +4,11 @@ import java.util.*;
 
 class Graph 
 {
-    int noOfNodes;
+    int allnodes;
+    // boolean[] matched;
+    boolean[] B;
+    boolean[] A;
+    int[] matched;
 
     //make adj list 
     List<List<Node>> adj_list = new ArrayList<>();
@@ -21,7 +25,6 @@ class Graph
         }
     };
  
-
     public Graph(List<Edges> edges)  //Constructor
     {
         int n = 0;
@@ -29,7 +32,7 @@ class Graph
         for (Edges e : edges) {
             n = Integer.max(n, Integer.max(e.src, e.dest));// compares current max with the new edges start and end node
         }
-        noOfNodes = n+1;
+        allnodes = n+1;
         for (int i = 0; i < edges.size(); i++)
         {
             adj_list.add(i, new ArrayList<>());
@@ -41,11 +44,13 @@ class Graph
             adj_list.get(e.src).add(new Node(e.dest, e.edgeweight, e.srcnodeweight, e.desnodeweight));
         }
 
-        // boolean[] matched;
+        this.matched = new int[allnodes];
+        Arrays.fill(matched, -1); // empty matching
+        this.A = new boolean[allnodes];
+        this.B = new boolean[allnodes];
     }
 
-
-    public static void calcslack(Graph graph)
+    public void calcslack(Graph graph)
     {
         List<Integer> slacklist=new ArrayList<Integer>(); 
         int src_vertex = 0;
@@ -61,7 +66,6 @@ class Graph
             src_vertex++;
         }        
     }
-
 
     public static void printGraph(Graph graph)  //Print adjacency list for the graph
     {
@@ -81,5 +85,49 @@ class Graph
         }
     }
 
-}
+    public List<Edges> findAugmentingPath() 
+    {
+        List<Edges> augmentingPath = new ArrayList<>();
+        matched = new int[allnodes];
+        Arrays.fill(matched, -1);
 
+        for (int u = 0; u < allnodes; u++) 
+        {
+            if (matched[u] == -1) {
+                boolean[] visited = new boolean[allnodes];
+                List<Edges> path = new ArrayList<>();
+                if (dfs(u, visited, path)) 
+                {
+                    augmentingPath.addAll(path);
+                }
+            }
+        }
+
+        return augmentingPath;
+    }
+
+    private boolean dfs(int u, boolean[] visited, List<Edges> path) {
+        visited[u] = true;
+
+        for (Node v : adj_list.get(u)) {
+            if (!visited[v.value] && !B[v.value]) 
+            {
+                B[v.value] = true;
+                if (matched[v.value] == -1) 
+                {
+                    path.add(new Edges(u, v.value, v.edgeweight, v.srcnodeweight, v.desnodeweight));
+                    return true;
+                }
+                if (dfs(matched[v.value], visited, path)) 
+                {
+                    path.add(new Edges(u, v.value, v.edgeweight, v.srcnodeweight, v.desnodeweight));
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+}
